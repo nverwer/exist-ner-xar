@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://expath.org/ns/pkg" name="http://rakensi.com/exist-db/xquery/functions/ner" abbrev="exist-ner-xar" version="1.0.1"
+    spec="1.0">
+    <title>Named Entity Recognition for eXist</title>
+    <author id="rakensi.com">Nico Verwer</author>
+    <website>https://github.com/nverwer/exist-ner-xar</website>
+    <license>GNU Lesser General Public License, version 2.1</license>
+    <copyright>true</copyright>
+
+    <!-- should be either "application" or "library" -->
+    <type>library</type>
+
+    <status>stable</status>
+
+    <tag>exist-ner-xar</tag>
+    <tag>ner</tag>
+    <category id="lib">Libraries</category>
+
+    <dependency processor="http://exist-db.org" semver-min="6.2.0" />
+
+    <!-- Collection inside /db/apps where xar-resources will be copied to -->
+    <!-- See issue #2: This makes the resulting XAR a resource-package instead of a pure library. -->
+    <!-- <target>exist-ner-xar</target> -->
+
+    <!-- includes everything in src/main/xar-resources, README.md, and LICENSE -->
+    <fileSets>
+        <fileSet>
+            <directory>C:\\P\\exist-ner-xar</directory>
+            <includes>
+                <include>README.md</include>
+                <include>LICENSE</include>
+            </includes>
+        </fileSet>
+        <fileSet>
+            <directory>C:\\P\\exist-ner-xar/src/main/xar-resources</directory>
+        </fileSet>
+    </fileSets>
+
+    <!-- include the XQuery Library Module written in Java (JAR output) from this project -->
+    <dependencySets>
+        <dependencySet>
+            <groupId>com.rakensi</groupId>
+            <artifactId>exist-ner-xar</artifactId>
+            <version>1.0.1</version>
+        </dependencySet>
+        <dependencySet>
+            <groupId>org.greenmercury</groupId>
+            <artifactId>SMAX</artifactId>
+            <version>1.0.2</version>
+        </dependencySet>
+    </dependencySets>
+
+    <!-- register the Java module to eXist-db -->
+    <components>
+        <resource>
+            <public-uri>http://rakensi.com/exist-db/xquery/functions/ner</public-uri>
+            <file>urn:java:class:com.rakensi.existdb.xquery.functions.ner.ExtensionFunctionsModule</file>
+        </resource>
+    </components>
+
+</package>

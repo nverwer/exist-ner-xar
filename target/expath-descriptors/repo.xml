@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<meta xmlns="http://exist-db.org/xquery/repo"
+      xmlns:repo="http://exist-db.org/xquery/repo"
+      xmlns:xs="http://www.w3.org/2001/XMLSchema">
+   <description/>
+   <author id="rakensi.com">Nico Verwer</author>
+   <website>https://github.com/nverwer/exist-ner-xar</website>
+   <status>stable</status>
+   <license>GNU Lesser General Public License, version 2.1</license>
+   <copyright>true</copyright>
+   <type>library</type>
+</meta>

@@ -1,0 +1,19 @@
+Manifest-Version: 1.0
+Build-Jdk-Spec: 15
+Specification-Title: Named Entity Recognition for eXist
+Specification-Version: 1.0
+Specification-Vendor: Rakensi
+Implementation-Title: Named Entity Recognition for eXist
+Implementation-Version: 1.0.1
+Implementation-Vendor: Rakensi
+Build-Tag: 
+Build-Timestamp: 
+Build-Version: 
+Created-By: Maven Integration for Eclipse
+Description: Named Entity Recognition (NER) package for eXist-db
+Git-Commit: 
+Git-Commit-Abbrev: 
+Implementation-URL: https://github.com/nverwer/exist-ner-xar
+Source-Repository: scm:git:https://www.github.com/exist-db/exist-apps-pa
+ rent.git/exist-ner-xar
+

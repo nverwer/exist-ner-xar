@@ -1,0 +1,13 @@
+com\rakensi\existdb\xquery\functions\ner\NamedEntityRecognition$1.class
+com\rakensi\existdb\xquery\functions\ner\FnNamedEntityRecognition$1.class
+com\rakensi\existdb\xquery\functions\ner\NamedEntityRecognition.class
+com\rakensi\existdb\xquery\functions\ner\StringUtils.class
+com\rakensi\existdb\xquery\functions\ner\TrieNER.class
+com\rakensi\existdb\xquery\functions\ner\Logger.class
+com\rakensi\existdb\xquery\functions\ner\FnNamedEntityRecognition.class
+com\rakensi\existdb\xquery\functions\ner\ExtensionFunctionsModule$ErrorCode.class
+com\rakensi\existdb\xquery\functions\ner\TrieScanner$ScanResult.class
+com\rakensi\existdb\xquery\functions\ner\FnNamedEntityRecognition$NerParser.class
+com\rakensi\existdb\xquery\functions\ner\TrieScanner.class
+com\rakensi\existdb\xquery\functions\ner\TrieScanner$Node.class
+com\rakensi\existdb\xquery\functions\ner\ExtensionFunctionsModule.class
