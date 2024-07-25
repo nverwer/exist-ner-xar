@@ -232,7 +232,7 @@ public class TrieScanner {
      * @param current The position in `text` that holds the next character to scan.
      * @param end The position one beyond the last position in `text`.
      * @param caseInsensitive Indicates that matching is case-insensitive.
-     * @param matchedText Fragment of the input text that has actually matched. This corresponds to text[start,current).
+     * @param matchedText Fragment of the input text that has actually matched. This corresponds to normalizedText[start,current).
      * @param matchedKey The exact key in the trie that has been matched so far.
      * @return The results of the current scan. This may be null if there are no results
      * Whitespace must be normalized in {@code normalizedText}.
@@ -380,6 +380,16 @@ public class TrieScanner {
   }
 
   /**
+   * Determines if c is an acceptable character to put in the Trie, i.e., c is a letter or digit or in wordChars, but not whitespace.
+   * @param c A character
+   * @return Indicates if c is acceptable.
+   * Whitespace is acceptable, but will be converted to normal space when put into the trie or when matched.
+   */
+  public boolean isNonSpaceTrieChar(char c) {
+    return Character.isLetterOrDigit(c) || wordChars.indexOf(c) >= 0;
+  }
+
+  /**
    * Turn the normalized version of a string into acceptable Trie characters.
    * Other characters are removed.
    * Whitespace is normalized; it is removed at the start and end, and collapsed in the middle.
@@ -428,7 +438,7 @@ public class TrieScanner {
     int n = s.length();
     for (int i = 0; i < n; i++) {
       char c = s.charAt(i);
-      if (isTrieChar(c)) {
+      if (isNonSpaceTrieChar(c)) {
         if (inSpace && sb.length() > 0) {
           sb.append(' ');
         }

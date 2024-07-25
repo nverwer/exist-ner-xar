@@ -42,4 +42,20 @@ Press the 'Eval' button. The output should look like:
 
 The `<wrapper>` needs to go away. I am working on that. This is an intermediate version that shows how this could work.
 
+```
+import module namespace ner = "http://rakensi.com/exist-db/xquery/functions/ner";
+
+let $grammar :=
+  <grammar>
+    <entity id="THE"><name>THE</name></entity>
+    <entity id="CF"><name>CF</name><name>C F</name></entity>
+    <entity id="RSVP"><name>rsvp</name><name>R S V P</name></entity>
+  </grammar>
+let $input := ``[c.f. the r.s.v.p.]``
+
+let $ner-parse := ner:named-entity-recognition($grammar, <ntt id=""/>,
+  map{'case-insensitive-min-length': 3, 'fuzzy-min-length': 3, 'word-chars': ''})
+return $ner-parse($input)
+```
+
 ## Notes

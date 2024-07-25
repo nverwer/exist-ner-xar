@@ -30,29 +30,24 @@ import org.exist.xquery.value.FunctionReturnSequenceType;
 import org.exist.xquery.value.Item;
 import org.exist.xquery.value.NodeValue;
 import org.exist.xquery.value.Sequence;
-import org.exist.xquery.value.StringValue;
 import org.exist.xquery.value.Type;
-import org.greenmercury.smax.Balancing;
+import org.exist.xquery.value.ValueSequence;
 import org.greenmercury.smax.SmaxDocument;
 import org.greenmercury.smax.SmaxElement;
 import org.greenmercury.smax.SmaxException;
 import org.greenmercury.smax.convert.DomElement;
 import org.greenmercury.smax.convert.SAX;
-import org.w3c.dom.DOMException;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
-
-import io.lacuna.bifurcan.IEntry;
-import net.sf.saxon.value.AtomicValue;
 
 /**
  * Implementation of
- *   named-entity-recognition($ner-grammar, <treaty id=""/>, $ner-options)
+ *   named-entity-recognition(
  *     $ner-grammar  as item()?  := (),
- *     $ner-template  as element(),
  *     $options  as map(*)?  := {}
- *   )  as function(node()) as item()
+ *   )  as function(node()) as item()*
  *
  * Example code (see the documentation in NamedEntityRecognition.java):
  *   import module namespace ner = "http://rakensi.com/exist-db/xquery/functions/ner";
@@ -65,9 +60,9 @@ import net.sf.saxon.value.AtomicValue;
  *     </grammar>
  *   let $input := ``[c.f. the r.s.v.p.]``
  *
- *   let $ner-parse := ner:named-entity-recognition($grammar, <ntt id=""/>,
+ *   let $ner := ner:named-entity-recognition($grammar,
  *     map{'case-insensitive-min-length': 3, 'fuzzy-min-length': 3, 'word-chars': ''})
- *   return $ner-parse($input)
+ *   return $ner($input)
  */
 public class FnNamedEntityRecognition extends BasicFunction
 {
@@ -77,15 +72,15 @@ public class FnNamedEntityRecognition extends BasicFunction
   static final FunctionSignature FS_NAMED_ENTITY_RECOGNITION =
       functionSignature(
           FnNamedEntityRecognition.FS_NAMED_ENTITY_RECOGNITION_NAME,
-          "Returns a NER (named entity recognition) parser from a grammar. The parser returns an XML representation of the input string as parsed by the provided grammar.",
-          new FunctionReturnSequenceType(Type.FUNCTION_REFERENCE, Cardinality.EXACTLY_ONE, "A function that can be used to parse an input string."),
-          param("grammar", Type.ITEM, "The NER grammar used to generate the parser"),
-          param("match-template", Type.ELEMENT, "The template for the XML element that is inserted for each content fragment that matches a named entity. This template must have one empty attribute, which will be filled with the id's of the matched named entities, separated by tab characters."),
-          optParam("options", Type.MAP, "The options for the parser genarator and the parser itself")
+          "Returns a NER (named entity recognition) matcher from a grammar.",
+          new FunctionReturnSequenceType(Type.FUNCTION_REFERENCE, Cardinality.EXACTLY_ONE, "A function that is used to match an input string or node."),
+          param("grammar", Type.ITEM, "The NER grammar used to generate the matcher. This can be a string or an element() or a xs:anyURI."),
+          optParam("options", Type.MAP, "The options for the matcher genarator and the matcher itself.")
       );
 
 
   private static final org.apache.logging.log4j.Logger apacheLogger = org.apache.logging.log4j.LogManager.getLogger(FnNamedEntityRecognition.class);
+
   private static final Logger logger = new Logger() {
     @Override
     public void info(String message)
@@ -111,54 +106,51 @@ public class FnNamedEntityRecognition extends BasicFunction
 
   @Override
   public Sequence eval(Sequence[] args, Sequence contextSequence) throws XPathException {
-      if (args[0].getItemCount() != 1) {
-        throw new XPathException(this, ErrorCodes.FOAP0001, FS_NAMED_ENTITY_RECOGNITION_NAME+": first parameter (grammar) must be exactly 1 a single item; got " + args[0].getItemCount(), args[0]);
-      }
-      if (!Type.subTypeOf(args[1].itemAt(0).getType(), Type.ELEMENT) || args[1].getItemCount() != 1) {
-        throw new XPathException(this, ErrorCodes.XPTY0004, "Item is not a single element; got '" + args[1].itemAt(0) + "'", args[1]);
-      }
+    // Grammar parameter.
+    if (args[0].getItemCount() != 1) {
+      throw new XPathException(this, ErrorCodes.FOAP0001, FS_NAMED_ENTITY_RECOGNITION_NAME+": first parameter (grammar) must be exactly 1 a single item; got " + args[0].getItemCount(), args[0]);
+    }
 
-      final NodeValue matchTemplate = (NodeValue) args[1].itemAt(0);
+    // Options parameter.
+    Map<String, String> nerOptions;
+    if (args[1].isEmpty()) {
+      nerOptions = new HashMap<String, String>();
+    } else {
+      final MapType options = (MapType) args[1].itemAt(0);
+      nerOptions = extractNEROptions(options);
+    }
 
-      Map<String, String> nerOptions;
-      if (args[2].isEmpty()) {
-        nerOptions = new HashMap<String, String>();
+    NamedEntityRecognition ner = null;
+    try {
+      Item grammarItem = args[0].itemAt(0);
+      if (Type.subTypeOf(grammarItem.getType(), Type.ANY_URI)) {
+        // The grammar is given by a URL.
+        URL grammar = new URL(grammarItem.getStringValue());
+        ner = new NamedEntityRecognition(grammar, nerOptions, logger);
+      } else if (Type.subTypeOf(grammarItem.getType(), Type.ELEMENT)) {
+        ner = new NamedEntityRecognition((Element)grammarItem, nerOptions, logger);
       } else {
-        final MapType options = (MapType) args[2].itemAt(0);
-        nerOptions = extractNEROptions(options);
+        // The grammar is given by a string.
+        String grammar = grammarItem.getStringValue();
+        ner = new NamedEntityRecognition(grammar, nerOptions, logger);
       }
+    }
+    catch (Exception e)
+    {
+      throw new XPathException(this, ErrorCodes.ERROR, "The NER parser could not be instantiated.", e);
+    }
 
-      NamedEntityRecognition ner = null;
-      try {
-        Item grammarItem = args[0].itemAt(0);
-        if (Type.subTypeOf(grammarItem.getType(), Type.ANY_URI)) {
-          // The grammar is given by a URL.
-          URL grammar = new URL(grammarItem.getStringValue());
-          ner = new NamedEntityRecognition(grammar, matchTemplate.getNode(), nerOptions, logger);
-        } else if (Type.subTypeOf(grammarItem.getType(), Type.ELEMENT)) {
-          ner = new NamedEntityRecognition((Element)grammarItem, matchTemplate.getNode(), nerOptions, logger);
-        } else {
-          // The grammar is given by a string.
-          String grammar = grammarItem.getStringValue();
-          ner = new NamedEntityRecognition(grammar, matchTemplate.getNode(), nerOptions, logger);
-        }
-      }
-      catch (Exception e)
-      {
-        throw new XPathException(this, ErrorCodes.ERROR, "The NER parser could not be instantiated.", e);
-      }
-
-      // Make a NerParser function. The signature is function(xs:item) as item()+
-      FunctionSignature parserSignature = FunctionDSL.functionSignature(
-          new QName("generated-ner-parser", "https://greenmercury.org/"),
-          "Generated NER parser, only used internally",
-          new FunctionReturnSequenceType(Type.ITEM, Cardinality.EXACTLY_ONE, "The result of parsing the input"),
-          param("input", Type.ITEM, "The input")
-      );
-      final NerParser nerParser = new NerParser(context, parserSignature, ner);
-      // Make a function reference that can be used as the result.
-      FunctionCall functionCall = FunctionFactory.wrap(context, nerParser);
-      return new FunctionReference(functionCall);
+    // Make a NerParser function. The signature is function(xs:item) as item()+
+    FunctionSignature parserSignature = FunctionDSL.functionSignature(
+        new QName("generated-ner-parser", "https://greenmercury.org/"),
+        "Generated NER parser, only used internally",
+        new FunctionReturnSequenceType(Type.ITEM, Cardinality.ZERO_OR_MORE, "The result of parsing the input"),
+        param("input", Type.ITEM, "The input")
+    );
+    final NerParser nerParser = new NerParser(context, parserSignature, ner);
+    // Make a function reference that can be used as the result.
+    FunctionCall functionCall = FunctionFactory.wrap(context, nerParser);
+    return new FunctionReference(functionCall);
   }
 
   /**
@@ -203,7 +195,7 @@ public class FnNamedEntityRecognition extends BasicFunction
     public Sequence eval(Sequence[] args, Sequence contextSequence) throws XPathException
     {
       Item inputParameter = args[0].itemAt(0);
-      // Create a SMAX document.
+      // Create a SMAX document with a wrapper root element.
       SmaxDocument smaxDocument = null;
       if (Type.subTypeOf(inputParameter.getType(), Type.STRING)) {
         // Wrap the string in an element.
@@ -216,6 +208,12 @@ public class FnNamedEntityRecognition extends BasicFunction
           Element inputElement = (Element) inputNode;
           try{
             smaxDocument = DomElement.toSmax(inputElement);
+            SmaxElement wrapped = smaxDocument.getMarkup();
+            SmaxElement wrapper = new SmaxElement("wrapper").
+                setStartPos(wrapped.getStartPos()).
+                setEndPos(wrapped.getEndPos()).
+                appendChild(wrapped);
+            smaxDocument = new SmaxDocument(wrapper, smaxDocument.getContentBuffer());
           } catch (SmaxException e) {
             throw new XPathException(this, ErrorCodes.ERROR, e);
           }
@@ -231,7 +229,18 @@ public class FnNamedEntityRecognition extends BasicFunction
         throw new XPathException(this, ErrorCodes.ERROR, e);
       }
       DocumentImpl outputDocument = saxAdapter.getDocument();
-      return outputDocument;
+      //ElementImpl outputElement = new ElementImpl(outputDocument, 0);
+      //return outputDocument;
+      final NodeList children = outputDocument.getDocumentElement().getChildNodes();
+      if(children.getLength() == 0) {
+          return Sequence.EMPTY_SEQUENCE;
+      }
+      final ValueSequence result = new ValueSequence(children.getLength());
+      for(int i = 0; i < children.getLength(); i++) {
+        NodeValue child = (NodeValue)children.item(i);
+        result.add(child);
+      }
+      return result;
     }
 
   }

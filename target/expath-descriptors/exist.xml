@@ -5,6 +5,6 @@
       <namespace>http://rakensi.com/exist-db/xquery/functions/ner</namespace>
       <class>com.rakensi.existdb.xquery.functions.ner.ExtensionFunctionsModule</class>
    </java>
-   <jar>exist-ner-xar-1.0.1.jar</jar>
+   <jar>exist-ner-xar-1.0.2.jar</jar>
    <jar>SMAX-1.0.2.jar</jar>
 </package>

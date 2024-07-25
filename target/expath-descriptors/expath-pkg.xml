@@ -3,7 +3,7 @@
          xmlns:xs="http://www.w3.org/2001/XMLSchema"
          name="http://rakensi.com/exist-db/xquery/functions/ner"
          abbrev="exist-ner-xar"
-         version="1.0.1"
+         version="1.0.2"
          spec="1.0">
    <title>Named Entity Recognition for eXist</title>
    <home>https://github.com/nverwer/exist-ner-xar</home>

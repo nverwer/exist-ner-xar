@@ -139,7 +139,6 @@ public abstract class TrieNER
       if (results != null) nrResults += results.size();
       /* Determine if the match qualifies:
        * - There is a result.
-       * - There may be accented characters, which are taken out in normalizedMatchedText.
        * - If (caseInsensitiveMinLength >= 0) the result-match was case-insensitive,
        *   which is correct if the matched text was long enough,
        *   otherwise there must be a case-sensitive match but no noise characters, so use matchedKey.
@@ -163,17 +162,16 @@ public abstract class TrieNER
             throw new RuntimeException("Match ends at both "+result.end+" and "+matchedEnd);
           }
           String onlyTrieCharsMatched = trie.toTrieCharsNormalizingNonTrieChars(text.subSequence(result.start, result.end));
-          String normalizedMatchedText = result.matchedText; // was: normalizedOneToOneText.subSequence(result.start, result.end).toString();
           // Test caseInsensitiveMinLength. If caseInsensitiveMinLength >= 0, match result is case-insensitive, which may not be correct.
           boolean satisfiesCaseInsensitiveMinLength =
             caseInsensitiveMinLength >= 0 && result.end - result.start >= caseInsensitiveMinLength
             ||
             onlyTrieCharsMatched.equals(result.matchedKey);
-          // Test fuzzyMinLength. For non-fuzzy matching, insignificant characters become significant.
+          // Test fuzzyMinLength. For non-fuzzy matching, insignificant characters become significant, but upper/lower case is insignificant.
           boolean satisfiesFuzzyMinLength =
             fuzzyMinLength >= 0 && result.end - result.start >= fuzzyMinLength
             ||
-            normalizedMatchedText.equals(result.matchedKey);
+            result.matchedText.toLowerCase().equals(result.matchedKey.toLowerCase());
           if (satisfiesCaseInsensitiveMinLength && satisfiesFuzzyMinLength) { // This is a correct match.
             if (start == result.end) {
               throw new RuntimeException("No progress matching from '"+text.subSequence(result.start, text.length())+"'");

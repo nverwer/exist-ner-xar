@@ -13,7 +13,7 @@
 
     <groupId>com.rakensi</groupId>
     <artifactId>exist-ner-xar</artifactId>
-    <version>1.0.1</version>
+    <version>1.0.2</version>
 
     <name>Named Entity Recognition for eXist</name>
     <description>Named Entity Recognition (NER) package for eXist-db</description>
@@ -42,24 +42,46 @@
 
     </properties>
 
+    <dependencyManagement>
+    
+      <dependencies>
+      
+        <dependency>
+          <groupId>org.junit</groupId>
+          <artifactId>junit-bom</artifactId>
+          <version>5.10.3</version>
+          <type>pom</type>
+          <scope>import</scope>
+        </dependency>
+        
+      </dependencies>
+      
+    </dependencyManagement>
+
     <dependencies>
 
         <dependency>
-            <groupId>org.exist-db</groupId>
-            <artifactId>exist-core</artifactId>
-            <version>${exist.version}</version>
-            <exclusions>
-             <exclusion>
-               <groupId>xml-apis</groupId>
-               <artifactId>xml-apis</artifactId>
-             </exclusion>
-           </exclusions>
+          <groupId>org.exist-db</groupId>
+          <artifactId>exist-core</artifactId>
+          <version>${exist.version}</version>
+          <exclusions>
+           <exclusion>
+             <groupId>xml-apis</groupId>
+             <artifactId>xml-apis</artifactId>
+           </exclusion>
+         </exclusions>
         </dependency>
         
         <dependency>
           <groupId>${smax.groupId}</groupId>
           <artifactId>${smax.artifactId}</artifactId>
           <version>${smax.version}</version>
+        </dependency>
+
+        <dependency>
+          <groupId>org.junit.jupiter</groupId>
+          <artifactId>junit-jupiter</artifactId>
+          <scope>test</scope>
         </dependency>
 
     </dependencies>
@@ -161,6 +183,10 @@
                     <autoVersionSubmodules>true</autoVersionSubmodules>
                     <tagNameFormat>@{project.version}</tagNameFormat>
                 </configuration>
+            </plugin>
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.3.0</version>
             </plugin>
         </plugins>
         <pluginManagement>

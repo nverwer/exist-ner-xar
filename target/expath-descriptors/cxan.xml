@@ -3,7 +3,7 @@
          xmlns:xs="http://www.w3.org/2001/XMLSchema"
          id="exist-ner-xar"
          name="http://rakensi.com/exist-db/xquery/functions/ner"
-         version="1.0.1">
+         version="1.0.2">
    <author id="rakensi.com">Nico Verwer</author>
    <category>Libraries</category>
    <tag>exist-ner-xar</tag>

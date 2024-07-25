@@ -4,7 +4,7 @@ Specification-Title: Named Entity Recognition for eXist
 Specification-Version: 1.0
 Specification-Vendor: Rakensi
 Implementation-Title: Named Entity Recognition for eXist
-Implementation-Version: 1.0.1
+Implementation-Version: 1.0.2
 Implementation-Vendor: Rakensi
 Build-Tag: 
 Build-Timestamp: 

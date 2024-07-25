@@ -32,13 +32,24 @@ import org.xml.sax.SAXParseException;
  *<p>
  * The transformer takes the following parameters:
  * <ul>
- *   <li>grammar A string containing the grammar that specifies the named entities.
- *       The named entities are defined by rules on separate lines of the form:
- *       <code>id &lt;- entity1 entity2 ...</code>
- *       where the entities are separated by tab characters.</li>
+ *   <li>grammar A string or element or URL containing the grammar that specifies the named entities.
+ *       When the grammar is a string, the named entities are defined by rules on separate lines of the form:
+ *       <code>id &lt;- name1 name2 ...</code>
+ *       or
+ *       <code>id : name1 name2 ...</code>
+ *       where the names are separated by tab characters.
+ *       When the grammar is an element, it has the form
+ *       <code>
+ *         &lt;grammar>
+ *           &lt;entity id="id">&lt;name>name1&lt;/name>...&lt;/entity>...
+ *         &lt;/grammar>
+ *       </code>
+ *       When the grammar is a URL, it must point to a document containing the grammar as a string or XML.
+ *   </li>
  *   <li>matchNodeTemplate The template for the XML element that is inserted for each content fragment that matches a named entity.
  *       This template must have one empty attribute, which will be filled with the id's of the matched named entities, separated by tab characters.
- *       There can be more than one id if the same entity occurs in different rules in the grammar.</li>
+ *       There can be more than one id if the same entity occurs in different rules in the grammar.
+ *   </li>
  *   <li>options A map with options. The following options are recognized:
  *     <ul>
  *       <li>word-chars Characters that are significant for matching an entity name. Default is "".
@@ -60,7 +71,15 @@ import org.xml.sax.SAXParseException;
  *           This prevents short words with noise to be recognized as abbreviations.
  *           Set to -1 to match exact. Set to 0 to match fuzzy.
  *           Default is -1.</li>
- *       <li>balancing The SMAX balancing strategy that is used when an element for a recognized entity is inserted.</li>
+ *       <li>balancing The SMAX balancing strategy that is used when an element for a recognized entity is inserted.
+ *           Default is OUTER</li>
+ *       <li>match-element-name The name of the element that is inserted around matched text fragments.
+ *           Default is 'fn:match'.
+ *       <li>match-element-namespace-uri The namespace URI of the match element.
+ *           This option must be present if the match-element-name contains a namespace prefix other than 'fn:'.
+ *           If the namespace prefix in 'match-element-name' is 'fn:', the default is 'http://www.w3.org/2005/xpath-functions'.</li>
+ *       <li>match-attribute The name of the attribute on the match element that will hold the id of the matching entity.
+ *           Default is 'id'.</li>
  *     </ul>
  *   </li>
  * </ul>
@@ -82,10 +101,10 @@ public class NamedEntityRecognition
   // Where to log to.
   private Logger logger;
 
-  // Node insertion template.
-  private SmaxElement matchElementTemplate;
-  // Name of the attribute that will hold the id's that are found for a named entity.
-  private String attributeName;
+  // Match element.
+  private String matchElementName;
+  private String matchElementNamespaceUri;
+  private String matchAttribute;
 
   // The minimum entity-lengths for case-insensitive or fuzzy matching.
   private int caseInsensitiveMinLength;
@@ -111,10 +130,10 @@ public class NamedEntityRecognition
   /**
    * This constructor compiles the named entities grammar from a String.
    */
-  public NamedEntityRecognition(String grammar, Node matchElementTemplate, Map<String, String> options, Logger logger)
+  public NamedEntityRecognition(String grammar, Map<String, String> options, Logger logger)
   throws Exception
   {
-    this(matchElementTemplate, options, logger);
+    this(options, logger);
     if (grammar == null) grammar = "";
     readGrammar(grammar);
   }
@@ -122,20 +141,20 @@ public class NamedEntityRecognition
   /**
    * This constructor compiles the named entities grammar from an Element.
    */
-  public NamedEntityRecognition(Element grammar, Node matchElementTemplate, Map<String, String> options, Logger logger)
+  public NamedEntityRecognition(Element grammar, Map<String, String> options, Logger logger)
   throws Exception
   {
-    this(matchElementTemplate, options, logger);
+    this(options, logger);
     readGrammar(grammar);
   }
 
   /**
    * This constructor compiles the named entities grammar from a URL.
    */
-  public NamedEntityRecognition(URL grammar, Node matchElementTemplate, Map<String, String> options, Logger logger)
+  public NamedEntityRecognition(URL grammar, Map<String, String> options, Logger logger)
   throws Exception
   {
-    this(matchElementTemplate, options, logger);
+    this(options, logger);
     readGrammar(grammar);
   }
 
@@ -146,17 +165,23 @@ public class NamedEntityRecognition
    * @param logger
    * @throws Exception
    */
-  private NamedEntityRecognition(Node matchElementTemplate, Map<String, String> options, Logger logger)
+  private NamedEntityRecognition(Map<String, String> options, Logger logger)
   throws Exception
   {
-    this.logger =logger;
-    this.setMatchNodeTemplate(matchElementTemplate);
-    caseInsensitiveMinLength = getOption(options, "case-insensitive-min-length", -1);
-    fuzzyMinLength = getOption(options, "fuzzy-min-length", -1);
-    wordChars = getOption(options, "word-chars", "");
-    noWordBefore = getOption(options, "no-word-before", "");
-    noWordAfter = getOption(options, "no-word-after", "");
-    balancing = getOption(options, "balancing", Balancing.OUTER);
+    this.logger = logger;
+    this.caseInsensitiveMinLength = getOption(options, "case-insensitive-min-length", -1);
+    this.fuzzyMinLength = getOption(options, "fuzzy-min-length", -1);
+    this.wordChars = getOption(options, "word-chars", "");
+    this.noWordBefore = getOption(options, "no-word-before", "");
+    this.noWordAfter = getOption(options, "no-word-after", "");
+    this.balancing = getOption(options, "balancing", Balancing.OUTER);
+    this.matchElementName = getOption(options, "match-element-name", "fn:match");
+    String defaultNamespaceUri = this.matchElementName.startsWith("fn:") ? "http://www.w3.org/2005/xpath-functions" : null;
+    this.matchElementNamespaceUri = getOption(options, "match-element-namespace-uri", defaultNamespaceUri);
+    this.matchAttribute = getOption(options, "match-attribute", "id");
+    if (this.matchElementName.contains(":") && this.matchElementNamespaceUri == null) {
+      throw new IllegalArgumentException("A match-element-namespace-uri must be defined for the match-element-name '"+this.matchElementName+"'");
+    }
     initTrieNER();
   }
 
@@ -172,41 +197,15 @@ public class NamedEntityRecognition
     return Optional.ofNullable(options.get(key)).map(v -> Balancing.parseBalancing(v)).orElse(defaultValue);
   }
 
-  private void setMatchNodeTemplate(Node matchDomElementTemplate)
-  throws Exception
-  {
-    if (matchDomElementTemplate.getNodeType() != Node.ELEMENT_NODE) {
-      throw new Exception("The match-element template node must be an element.");
-    }
-    try {
-      this.matchElementTemplate = DomElement.toSmax((Element)matchDomElementTemplate).getMarkup();
-    } catch (SmaxException e) {
-      throw new Exception(e);
-    }
-    Attributes attributes = this.matchElementTemplate.getAttributes();
-    for (int i = 0; i < attributes.getLength(); ++i) {
-      if (attributes.getValue(i) == null || attributes.getValue(i).length() == 0) {
-        if (this.attributeName != null) {
-          throw new Exception("The match-element template must have exactly one empty attribute."+
-              " Found "+this.attributeName+" and "+attributes.getQName(i));
-        }
-        this.attributeName = attributes.getQName(i);
-      }
-    }
-    if (this.attributeName == null) {
-      throw new Exception("The match node template must have exactly one empty attribute. Found none.");
-    }
-  }
-
   private void initTrieNER()
   {
     triener = new TrieNER(wordChars, noWordBefore, noWordAfter, logger) {
       @Override
       public void match(CharSequence text, int start, int end, List<String> ids) {
-        SmaxElement matchElement = matchElementTemplate.shallowCopy();
+        SmaxElement matchElement = new SmaxElement(matchElementNamespaceUri, matchElementName);
         try
         {
-          matchElement.setAttribute(attributeName, String.join("\t", ids));
+          matchElement.setAttribute(matchAttribute, String.join("\t", ids));
         }
         catch (SmaxException e)
         {
@@ -216,7 +215,7 @@ public class NamedEntityRecognition
       }
       @Override
       public void noMatch(CharSequence text, int start, int end) {
-     // No action is needed.
+        // No action is needed.
       }
     };
   }
