@@ -102,8 +102,7 @@ class NamedEntityRecognitionTest
   @Test
   void test_WordChars() throws Exception
   {
-    String grammar =
-      "RSVP <- R S V P" + "\n";
+    String grammar = "RSVP <- R S V P" + "\n";
     Map<String, String> options = new HashMap<String, String>();
     options.put("fuzzy-min-length", "4");
     options.put("case-insensitive-min-length", "4");
@@ -123,4 +122,27 @@ class NamedEntityRecognitionTest
     expectedOutput = "<r>Put an r.s.v.p. at the end.</r>";
     assertEquals(expectedOutput, output);
   }
+
+  @Test
+  void test_TransparentXML() throws Exception
+  {
+    String grammar = "RSVP <- RSVP" + "\n";
+    Map<String, String> options = new HashMap<String, String>();
+    NamedEntityRecognition ner = new NamedEntityRecognition(grammar, options, logger);
+    // default balancing is OUTER
+    SmaxDocument document = XmlString.toSmax("<r>R<i>SVP!</i></r>");
+    ner.scan(document);
+    String output = XmlString.fromSmax(document).replaceAll("<\\?.*?\\?>", "").replaceAll("\\s*xmlns:.+?=\".*?\"", "");
+    String expectedOutput = "<r><fn:match id=\"RSVP\">R<i>SVP!</i></fn:match></r>";
+    assertEquals(expectedOutput, output);
+    // test balancing INNER
+    options.put("balancing", "INNER");
+    ner = new NamedEntityRecognition(grammar, options, logger);
+    document = XmlString.toSmax("<r>R<i>SVP!</i></r>");
+    ner.scan(document);
+    output = XmlString.fromSmax(document).replaceAll("<\\?.*?\\?>", "").replaceAll("\\s*xmlns:.+?=\".*?\"", "");
+    expectedOutput = "<r><fn:match id=\"RSVP\">R</fn:match><i>SVP!</i></r>";
+    assertEquals(expectedOutput, output);
+  }
+
 }
