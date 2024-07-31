@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<package xmlns="http://expath.org/ns/pkg" name="http://rakensi.com/exist-db/xquery/functions/ner" abbrev="exist-ner-xar" version="1.0.2"
+<package xmlns="http://expath.org/ns/pkg" name="http://rakensi.com/xquery/functions/ner" abbrev="exist-ner-xar" version="1.1.0"
     spec="1.0">
     <title>Named Entity Recognition for eXist</title>
     <author id="rakensi.com">Nico Verwer</author>
@@ -25,14 +25,14 @@
     <!-- includes everything in src/main/xar-resources, README.md, and LICENSE -->
     <fileSets>
         <fileSet>
-            <directory>C:\\P\\exist-ner-xar</directory>
+            <directory>C:\\P\\XML\\exist-ner-xar</directory>
             <includes>
                 <include>README.md</include>
                 <include>LICENSE</include>
             </includes>
         </fileSet>
         <fileSet>
-            <directory>C:\\P\\exist-ner-xar/src/main/xar-resources</directory>
+            <directory>C:\\P\\XML\\exist-ner-xar/src/main/xar-resources</directory>
         </fileSet>
     </fileSets>
 
@@ -41,11 +41,16 @@
         <dependencySet>
             <groupId>com.rakensi</groupId>
             <artifactId>exist-ner-xar</artifactId>
-            <version>1.0.2</version>
+            <version>1.1.0</version>
         </dependencySet>
         <dependencySet>
             <groupId>org.greenmercury</groupId>
             <artifactId>SMAX</artifactId>
+            <version>1.0.2</version>
+        </dependencySet>
+        <dependencySet>
+            <groupId>com.rakensi</groupId>
+            <artifactId>XML-NER</artifactId>
             <version>1.0.2</version>
         </dependencySet>
     </dependencySets>
@@ -53,7 +58,7 @@
     <!-- register the Java module to eXist-db -->
     <components>
         <resource>
-            <public-uri>http://rakensi.com/exist-db/xquery/functions/ner</public-uri>
+            <public-uri>http://rakensi.com/xquery/functions/ner</public-uri>
             <file>urn:java:class:com.rakensi.existdb.xquery.functions.ner.ExtensionFunctionsModule</file>
         </resource>
     </components>

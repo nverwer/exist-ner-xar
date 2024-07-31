@@ -11,8 +11,10 @@ import java.util.List;
 import java.util.Map;
 
 import org.exist.dom.QName;
+import org.exist.dom.QName.IllegalQNameException;
 import org.exist.dom.memtree.DocumentImpl;
 import org.exist.dom.memtree.SAXAdapter;
+import org.exist.dom.persistent.ElementImpl;
 import org.exist.xquery.BasicFunction;
 import org.exist.xquery.Cardinality;
 import org.exist.xquery.ErrorCodes;
@@ -42,15 +44,18 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import com.rakensi.xml.ner.Logger;
+import com.rakensi.xml.ner.NamedEntityRecognition;
+
 /**
  * Implementation of
  *   named-entity-recognition(
  *     $ner-grammar  as item()?  := (),
- *     $options  as map(*)?  := {}
- *   )  as function(node()) as item()*
+ *     $options  as map(*)?  := map{}
+ *   )  as function($input as node()) as item()*
  *
  * Example code (see the documentation in NamedEntityRecognition.java):
- *   import module namespace ner = "http://rakensi.com/exist-db/xquery/functions/ner";
+ *   import module namespace ner = "http://rakensi.com/xquery/functions/ner";
  *
  *   let $grammar :=
  *     <grammar>
@@ -195,7 +200,7 @@ public class FnNamedEntityRecognition extends BasicFunction
     public Sequence eval(Sequence[] args, Sequence contextSequence) throws XPathException
     {
       Item inputParameter = args[0].itemAt(0);
-      // Create a SMAX document with a wrapper root element.
+      // Create a SMAX document with a <wrapper> root element that will be removed later.
       SmaxDocument smaxDocument = null;
       if (Type.subTypeOf(inputParameter.getType(), Type.STRING)) {
         // Wrap the string in an element.
@@ -204,19 +209,11 @@ public class FnNamedEntityRecognition extends BasicFunction
         smaxDocument = new SmaxDocument(wrapper, inputString);
       } else if (Type.subTypeOf(inputParameter.getType(), Type.NODE)) {
         Node inputNode = ((NodeValue) inputParameter).getNode();
-        if (inputNode.getNodeType() == Node.ELEMENT_NODE) {
-          Element inputElement = (Element) inputNode;
-          try{
-            smaxDocument = DomElement.toSmax(inputElement);
-            SmaxElement wrapped = smaxDocument.getMarkup();
-            SmaxElement wrapper = new SmaxElement("wrapper").
-                setStartPos(wrapped.getStartPos()).
-                setEndPos(wrapped.getEndPos()).
-                appendChild(wrapped);
-            smaxDocument = new SmaxDocument(wrapper, smaxDocument.getContentBuffer());
-          } catch (SmaxException e) {
-            throw new XPathException(this, ErrorCodes.ERROR, e);
-          }
+        Element inputElement = wrap(inputNode);
+        try{
+          smaxDocument = DomElement.toSmax(inputElement);
+        } catch (SmaxException e) {
+          throw new XPathException(this, ErrorCodes.ERROR, e);
         }
       }
       // Do Named Entity Recognition on the SMAX document.
@@ -241,6 +238,20 @@ public class FnNamedEntityRecognition extends BasicFunction
         result.add(child);
       }
       return result;
+    }
+
+    /**
+     * The org.exist.dom.memtree.Element does not implement appendChild(), and org.exist.dom.persistent.ElementImpl does not want the owner element of `node`.
+     * Therefore, we have to make our own wrapper element, which needs to work for org.greenmercury.smax.convert.DomElement.toSmax(Element).
+     * The easiest way is to make a SmaxElement.
+     * @param node A node that must be wrapped in a "wrapper" element.
+     * @return The wrapper element.
+     */
+    private Element wrap(Node node)
+    {
+      Element wrapper = new SmaxElement("wrapper");
+      wrapper.appendChild(node);
+      return wrapper;
     }
 
   }

@@ -18,7 +18,7 @@ import org.exist.xquery.value.FunctionReturnSequenceType;
  */
 public class ExtensionFunctionsModule extends AbstractInternalModule {
 
-    public static final String NAMESPACE_URI = "http://rakensi.com/exist-db/xquery/functions/ner";
+    public static final String NAMESPACE_URI = "http://rakensi.com/xquery/functions/ner";
     public static final String PREFIX = "ner";
     public static final String RELEASED_IN_VERSION = "eXist-6.2.0";
 

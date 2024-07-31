@@ -13,7 +13,7 @@
 
     <groupId>com.rakensi</groupId>
     <artifactId>exist-ner-xar</artifactId>
-    <version>1.0.2</version>
+    <version>1.1.0</version>
 
     <name>Named Entity Recognition for eXist</name>
     <description>Named Entity Recognition (NER) package for eXist-db</description>
@@ -33,11 +33,15 @@
         <smax.groupId>org.greenmercury</smax.groupId>
         <smax.artifactId>SMAX</smax.artifactId>
         <smax.version>1.0.2</smax.version>
+    
+        <ner.groupId>com.rakensi</ner.groupId>
+        <ner.artifactId>XML-NER</ner.artifactId>
+        <ner.version>1.0.2</ner.version>
 
         <!-- used in the EXPath Package Descriptor -->
-        <package-name>http://rakensi.com/exist-db/xquery/functions/ner</package-name>
+        <package-name>http://rakensi.com/xquery/functions/ner</package-name>
 
-        <rxf.module.namespace>http://rakensi.com/exist-db/xquery/functions/ner</rxf.module.namespace>
+        <rxf.module.namespace>http://rakensi.com/xquery/functions/ner</rxf.module.namespace>
         <rxf.module.java.classname>ExtensionFunctionsModule</rxf.module.java.classname>
 
     </properties>
@@ -76,6 +80,12 @@
           <groupId>${smax.groupId}</groupId>
           <artifactId>${smax.artifactId}</artifactId>
           <version>${smax.version}</version>
+        </dependency>
+        
+        <dependency>
+          <groupId>${ner.groupId}</groupId>
+          <artifactId>${ner.artifactId}</artifactId>
+          <version>${ner.version}</version>
         </dependency>
 
         <dependency>
