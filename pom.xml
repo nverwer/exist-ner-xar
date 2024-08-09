@@ -32,11 +32,11 @@
     
         <smax.groupId>org.greenmercury</smax.groupId>
         <smax.artifactId>SMAX</smax.artifactId>
-        <smax.version>1.0.2</smax.version>
+        <smax.version>1.0.3</smax.version>
     
         <ner.groupId>com.rakensi</ner.groupId>
         <ner.artifactId>XML-NER</ner.artifactId>
-        <ner.version>1.0.2</ner.version>
+        <ner.version>1.0.3</ner.version>
 
         <!-- used in the EXPath Package Descriptor -->
         <package-name>http://rakensi.com/xquery/functions/ner</package-name>

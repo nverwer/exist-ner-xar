@@ -52,22 +52,9 @@ import com.rakensi.xml.ner.NamedEntityRecognition;
  *   named-entity-recognition(
  *     $ner-grammar  as item()?  := (),
  *     $options  as map(*)?  := map{}
- *   )  as function($input as node()) as item()*
+ *   )  as function($input as item()) as node()*
  *
- * Example code (see the documentation in NamedEntityRecognition.java):
- *   import module namespace ner = "http://rakensi.com/xquery/functions/ner";
- *
- *   let $grammar :=
- *     <grammar>
- *       <entity id="THE"><name>THE</name></entity>
- *       <entity id="CF"><name>CF</name><name>C F</name></entity>
- *       <entity id="RSVP"><name>rsvp</name><name>R S V P</name></entity>
- *     </grammar>
- *   let $input := ``[c.f. the r.s.v.p.]``
- *
- *   let $ner := ner:named-entity-recognition($grammar,
- *     map{'case-insensitive-min-length': 3, 'fuzzy-min-length': 3, 'word-chars': ''})
- *   return $ner($input)
+ * See the documentation in the [XML-NER project](https://github.com/nverwer/XML-NER), and in `NamedEntityRecognition.java` in that project.
  */
 public class FnNamedEntityRecognition extends BasicFunction
 {
@@ -215,6 +202,8 @@ public class FnNamedEntityRecognition extends BasicFunction
         } catch (SmaxException e) {
           throw new XPathException(this, ErrorCodes.ERROR, e);
         }
+      } else {
+        throw new XPathException(this, ErrorCodes.ERROR, "The generated NER function accepts a string or node, but not a "+Type.getTypeName(inputParameter.getType()));
       }
       // Do Named Entity Recognition on the SMAX document.
       this.ner.scan(smaxDocument);
@@ -243,13 +232,12 @@ public class FnNamedEntityRecognition extends BasicFunction
     /**
      * The org.exist.dom.memtree.Element does not implement appendChild(), and org.exist.dom.persistent.ElementImpl does not want the owner element of `node`.
      * Therefore, we have to make our own wrapper element, which needs to work for org.greenmercury.smax.convert.DomElement.toSmax(Element).
-     * The easiest way is to make a SmaxElement.
      * @param node A node that must be wrapped in a "wrapper" element.
      * @return The wrapper element.
      */
     private Element wrap(Node node)
     {
-      Element wrapper = new SmaxElement("wrapper");
+      Element wrapper = new VerySimpleElementImpl("wrapper");
       wrapper.appendChild(node);
       return wrapper;
     }
