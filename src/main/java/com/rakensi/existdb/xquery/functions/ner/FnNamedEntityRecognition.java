@@ -39,6 +39,8 @@ import org.greenmercury.smax.SmaxElement;
 import org.greenmercury.smax.SmaxException;
 import org.greenmercury.smax.convert.DomElement;
 import org.greenmercury.smax.convert.SAX;
+import org.w3c.dom.Document;
+import org.w3c.dom.DocumentFragment;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -46,6 +48,7 @@ import org.xml.sax.SAXException;
 
 import com.rakensi.xml.ner.Logger;
 import com.rakensi.xml.ner.NamedEntityRecognition;
+import com.rakensi.xml.ner.VerySimpleElementImpl;
 
 /**
  * Implementation of
@@ -196,6 +199,9 @@ public class FnNamedEntityRecognition extends BasicFunction
         smaxDocument = new SmaxDocument(wrapper, inputString);
       } else if (Type.subTypeOf(inputParameter.getType(), Type.NODE)) {
         Node inputNode = ((NodeValue) inputParameter).getNode();
+        if (inputNode instanceof Document || inputNode instanceof DocumentFragment) {
+          inputNode = inputNode.getFirstChild();
+        }
         Element inputElement = wrap(inputNode);
         try{
           smaxDocument = DomElement.toSmax(inputElement);
